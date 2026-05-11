@@ -6,9 +6,6 @@ from const import (
     TRAIN_FILE_PATTERN, WEATHER_FILE_PATTERN, AVAILABLE_YEARS, AVAILABLE_MONTHS,
 )
 
-_TRAIN_COLS = ["trainNumber", "departureDate", "trainType", "trainCategory", "cancelled"]
-
-
 @st.cache_data
 def load_train_data(year: int, month: int) -> pd.DataFrame:
     path = TRAIN_DATA_PATH / TRAIN_FILE_PATTERN.format(year=year, month=month)
