@@ -1,0 +1,14 @@
+name: venv_rail_fmi_demo
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pandas
+  - plotly
+  - pip
+  - pip:
+    - streamlit>=1.32
+    - folium
+    - streamlit-folium
+    - pytest
