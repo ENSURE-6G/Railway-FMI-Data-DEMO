@@ -19,6 +19,10 @@ month = col_m.selectbox("Month", AVAILABLE_MONTHS, index=0, format_func=lambda m
 with st.spinner("Loading weather data..."):
     weather_df = load_weather_data(year, month)
 
+if weather_df.empty:
+    st.error(f"No weather data available for {year}-{month:02d}.")
+    st.stop()
+
 ems_stations = load_ems_stations()
 
 st.divider()
@@ -71,13 +75,14 @@ if selected_station:
 
     def make_line_chart(df, col, title, unit):
         fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=df["timestamp"],
-            y=df[col],
-            mode="lines",
-            line=dict(width=2),
-            hovertemplate=f"%{{x}}<br>{title}: %{{y}} {unit}<extra></extra>",
-        ))
+        if col in df.columns:
+            fig.add_trace(go.Scatter(
+                x=df["timestamp"],
+                y=df[col],
+                mode="lines",
+                line=dict(width=2),
+                hovertemplate=f"%{{x}}<br>{title}: %{{y}} {unit}<extra></extra>",
+            ))
         fig.update_layout(
             title=title,
             xaxis_title="Time",

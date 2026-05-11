@@ -19,6 +19,16 @@ month = col_m.selectbox("Month", AVAILABLE_MONTHS, index=0, format_func=lambda m
 with st.spinner("Loading train data..."):
     stops_df = load_train_data(year, month)
 
+if stops_df.empty:
+    st.error(f"No train data available for {year}-{month:02d}.")
+    st.stop()
+
+# Clear stale search results when the data period changes
+data_key = f"{year}-{month}"
+if st.session_state.get("data_key") != data_key:
+    st.session_state["data_key"] = data_key
+    st.session_state.pop("search_done", None)
+
 stations = get_unique_stations(stops_df)
 
 st.divider()
