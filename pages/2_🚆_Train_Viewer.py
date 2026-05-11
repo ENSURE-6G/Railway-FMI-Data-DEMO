@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from streamlit_folium import st_folium
 from utils.data_loader import load_train_data, load_train_stations
 from utils.train_utils import get_unique_stations, get_trains_for_route, get_train_route
-from const import AVAILABLE_YEARS, AVAILABLE_MONTHS, MAP_CENTER, MAP_ZOOM
+from const import AVAILABLE_YEARS, AVAILABLE_MONTHS
 
 st.set_page_config(page_title="Train Viewer", page_icon="🚆", layout="wide")
 st.title("🚆 Train Viewer")
@@ -26,17 +26,17 @@ st.divider()
 # --- Route selection ---
 st.subheader("🔍 Select Route")
 col_o, col_d = st.columns(2)
-origin = col_o.selectbox("Origin station", stations, key="origin")
-destination = col_d.selectbox("Destination station", stations, key="destination")
+origin = col_o.selectbox("Origin station", stations, key="widget_origin")
+destination = col_d.selectbox("Destination station", stations, key="widget_destination")
 
 if st.button("🔍 Find Trains", type="primary"):
     st.session_state["search_done"] = True
-    st.session_state["origin"] = origin
-    st.session_state["destination"] = destination
+    st.session_state["saved_origin"] = origin
+    st.session_state["saved_destination"] = destination
 
 if st.session_state.get("search_done"):
-    origin = st.session_state["origin"]
-    destination = st.session_state["destination"]
+    origin = st.session_state["saved_origin"]
+    destination = st.session_state["saved_destination"]
 
     if origin == destination:
         st.warning("Origin and destination must be different.")
