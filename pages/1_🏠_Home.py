@@ -2,7 +2,7 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-from utils.data_loader import load_train_stations, load_ems_stations, get_total_train_count
+from utils.data_loader import load_train_stations, load_ems_stations
 from const import MAP_CENTER, MAP_ZOOM, AVAILABLE_YEARS
 
 st.set_page_config(page_title="Home", page_icon="🏠", layout="wide")
@@ -13,7 +13,6 @@ st.caption("Finnish railway timetable and FMI meteorological observations — 20
 # --- Metrics ---
 train_stations = load_train_stations()
 ems_stations = load_ems_stations()
-total_trains = get_total_train_count()
 
 col1, col2, col3 = st.columns(3)
 col1.metric("🚉 Train Stations", len(train_stations))
@@ -69,12 +68,12 @@ st.divider()
 
 # --- About ---
 with st.expander("ℹ️ About this dataset"):
-    st.markdown("""
+    st.markdown(f"""
 **Train data** is sourced from the [Finnish Transport Infrastructure Agency (Väylävirasto)](https://www.digitraffic.fi/)
 via the Digitraffic open data API. It covers all Finnish passenger, commuter, and freight trains
 with scheduled and actual timetable rows including delay information, for the years 2024–2025.
 
 **Weather data** is sourced from the [Finnish Meteorological Institute (FMI)](https://www.ilmatieteenlaitos.fi/)
-open data service. It contains hourly observations from **""" + str(len(ems_stations)) + """ automatic weather stations**
+open data service. It contains hourly observations from **{len(ems_stations)} automatic weather stations**
 across Finland, including temperature, wind speed, precipitation, snow depth, pressure, and visibility.
     """)
