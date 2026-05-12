@@ -18,8 +18,6 @@ def get_trains_for_route(
         .rename(columns={"scheduledTime": "dest_time"})
     )
     merged = origin_stops.merge(dest_stops, on=["trainNumber", "departureDate"])
-    merged["origin_time"] = pd.to_datetime(merged["origin_time"])
-    merged["dest_time"] = pd.to_datetime(merged["dest_time"])
     valid = merged[merged["origin_time"] < merged["dest_time"]].copy()
 
     train_meta = (
@@ -35,9 +33,8 @@ def get_trains_for_route(
 
 
 def get_train_route(
-    stops_df: pd.DataFrame, train_number: int, departure_date: str
+    stops_df: pd.DataFrame, train_number: int, departure_date: str | pd.Timestamp
 ) -> pd.DataFrame:
     mask = (stops_df["trainNumber"] == train_number) & (stops_df["departureDate"] == departure_date)
     route = stops_df[mask].copy()
-    route["scheduledTime"] = pd.to_datetime(route["scheduledTime"])
     return route.sort_values("scheduledTime").reset_index(drop=True)
