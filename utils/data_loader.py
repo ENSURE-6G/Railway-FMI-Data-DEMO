@@ -3,6 +3,7 @@ import streamlit as st
 from const import (
     TRAIN_DATA_PATH, WEATHER_DATA_PATH, METADATA_PATH,
     TRAIN_FILE_PATTERN, WEATHER_FILE_PATTERN,
+    MATCHED_DATA_PATH, MATCHED_FILE_PATTERN,
 )
 
 
@@ -25,6 +26,17 @@ def load_weather_data(year: int, month: int) -> pd.DataFrame:
     df = pd.read_csv(path)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     return df
+
+
+@st.cache_data
+def load_matched_data(year: int, month: int) -> pd.DataFrame:
+    path = MATCHED_DATA_PATH / MATCHED_FILE_PATTERN.format(year=year, month=month)
+    if not path.exists():
+        return pd.DataFrame()
+    return pd.read_csv(
+        path,
+        parse_dates=["scheduledTime", "actualTime", "departureDate", "timetableAcceptanceDate"],
+    )
 
 
 @st.cache_data
