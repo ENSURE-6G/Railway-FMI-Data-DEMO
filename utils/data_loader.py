@@ -15,6 +15,7 @@ def load_train_data(year: int, month: int) -> pd.DataFrame:
     return pd.read_csv(
         path,
         parse_dates=["scheduledTime", "actualTime", "departureDate", "timetableAcceptanceDate"],
+        low_memory=False,
     )
 
 
@@ -36,6 +37,7 @@ def load_matched_data(year: int, month: int) -> pd.DataFrame:
     return pd.read_csv(
         path,
         parse_dates=["scheduledTime", "actualTime", "departureDate", "timetableAcceptanceDate"],
+        low_memory=False,
     )
 
 

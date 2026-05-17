@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from streamlit_folium import st_folium
 from utils.data_loader import load_train_data, load_train_stations
 from utils.train_utils import get_unique_stations, get_trains_for_route, get_train_route
-from const import AVAILABLE_YEARS, AVAILABLE_MONTHS
+from const import AVAILABLE_YEARS, AVAILABLE_MONTHS, DEFAULT_ORIGIN, DEFAULT_DESTINATION
 
 st.set_page_config(page_title="Train Viewer", page_icon="🚆", layout="wide")
 st.title("🚆 Train Viewer")
@@ -36,8 +36,10 @@ st.divider()
 # --- Route selection ---
 st.subheader("🔍 Select Route")
 col_o, col_d = st.columns(2)
-origin = col_o.selectbox("Origin station", stations, key="widget_origin")
-destination = col_d.selectbox("Destination station", stations, key="widget_destination")
+default_origin_idx = stations.index(DEFAULT_ORIGIN) if DEFAULT_ORIGIN in stations else 0
+default_dest_idx = stations.index(DEFAULT_DESTINATION) if DEFAULT_DESTINATION in stations else 0
+origin = col_o.selectbox("Origin station", stations, index=default_origin_idx, key="widget_origin")
+destination = col_d.selectbox("Destination station", stations, index=default_dest_idx, key="widget_destination")
 
 if st.button("🔍 Find Trains", type="primary"):
     st.session_state["search_done"] = True
@@ -60,29 +62,66 @@ if st.session_state.get("search_done"):
 
     st.success(f"Found **{len(route_df)}** train(s) from **{origin}** to **{destination}**")
 
-    # Display train list
-    display_df = route_df.copy()
-    display_df["origin_time"] = display_df["origin_time"].dt.strftime("%Y-%m-%d %H:%M")
-    st.dataframe(
-        display_df.rename(columns={
-            "trainNumber": "Train #", "trainType": "Type",
-            "trainCategory": "Category", "origin_time": "Departure",
-            "cancelled": "Cancelled", "departureDate": "Date",
-        }),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    train_options = route_df["trainNumber"].astype(str).tolist()
+    train_options = [
+        f"{row['trainNumber']} — {str(row['departureDate'])[:10]}"
+        for _, row in route_df.iterrows()
+    ]
     selected_train_str = st.selectbox("Select a train to inspect", train_options)
-    selected_train = int(selected_train_str)
-    departure_date = route_df[route_df["trainNumber"] == selected_train]["departureDate"].iloc[0]
+    selected_train = int(selected_train_str.split(" — ")[0])
+    departure_date = route_df.iloc[train_options.index(selected_train_str)]["departureDate"]
 
     # --- Train detail ---
     route_stops = get_train_route(stops_df, selected_train, departure_date)
 
+    # Trim to stops between origin and destination (inclusive)
+    origin_mask = route_stops["stationName"] == origin
+    dest_mask = route_stops["stationName"] == destination
+    if origin_mask.any() and dest_mask.any():
+        origin_idx = route_stops[origin_mask].index[0]
+        dest_idx = route_stops[dest_mask].index[0]
+        if origin_idx <= dest_idx:
+            route_stops = route_stops.loc[origin_idx:dest_idx].reset_index(drop=True)
+
     st.divider()
-    st.subheader(f"Train {selected_train} — {departure_date}")
+    st.subheader(f"Train {selected_train} — {str(departure_date)[:10]}")
+
+    # --- Plotly timeline chart ---
+    st.markdown("**Schedule vs Actual Timeline**")
+    delay_colors = []
+    for d in route_stops["differenceInMinutes"]:
+        if pd.isna(d) or d <= 5:
+            delay_colors.append("#2ca02c")
+        elif d <= 10:
+            delay_colors.append("#ff7f0e")
+        else:
+            delay_colors.append("#d62728")
+
+    sched_labels = pd.to_datetime(route_stops["scheduledTime"]).dt.strftime("%H:%M")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=sched_labels,
+        y=route_stops["differenceInMinutes"],
+        mode="markers+lines",
+        name="Delay",
+        line=dict(color="#aec7e8"),
+        marker=dict(color=delay_colors, size=10),
+        text=[
+            f"{row['stationName']}<br>Scheduled: {str(row['scheduledTime'])[:16]}<br>Actual: {str(row['actualTime'])[:16]}"
+            for _, row in route_stops.iterrows()
+        ],
+        hovertemplate="%{text}<br>Delay: %{y} min<extra></extra>",
+    ))
+    fig.add_hline(y=0, line_dash="dot", line_color="gray", opacity=0.5)
+    fig.update_layout(
+        xaxis_title="Scheduled Time",
+        yaxis_title="Delay (minutes)",
+        height=400,
+        margin=dict(l=10, r=10, t=30, b=10),
+        legend=dict(orientation="h"),
+        xaxis=dict(tickangle=-45),
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
     # Join with station metadata for lat/lon
     train_stations = load_train_stations()
@@ -104,7 +143,7 @@ if st.session_state.get("search_done"):
 
         for _, row in coords.iterrows():
             delay = row["differenceInMinutes"]
-            color = "#2ca02c" if pd.isna(delay) or delay < 2 else "#ff7f0e" if delay <= 10 else "#d62728"
+            color = "#2ca02c" if pd.isna(delay) or delay <= 5 else "#ff7f0e" if delay <= 10 else "#d62728"
             sched = str(row["scheduledTime"])[:16] if pd.notna(row["scheduledTime"]) else "N/A"
             actual = str(row["actualTime"])[:16] if pd.notna(row["actualTime"]) else "N/A"
             delay_str = f"{int(delay)} min" if pd.notna(delay) else "N/A"
@@ -125,43 +164,9 @@ if st.session_state.get("search_done"):
                 tooltip=row["stationName"],
             ).add_to(m)
 
-        st_folium(m, use_container_width=True, height=450, returned_objects=[])
+        st_folium(m, use_container_width=True, height=650, returned_objects=[])
     else:
         st.warning("No coordinate data available for this train's stops.")
-
-    # --- Plotly timeline chart ---
-    st.markdown("**Schedule vs Actual Timeline**")
-    delay_colors = []
-    for d in route_stops["differenceInMinutes"]:
-        if pd.isna(d) or d < 2:
-            delay_colors.append("#2ca02c")
-        elif d <= 10:
-            delay_colors.append("#ff7f0e")
-        else:
-            delay_colors.append("#d62728")
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=route_stops["scheduledTime"],
-        y=route_stops["stationName"],
-        mode="markers+lines",
-        name="Scheduled",
-        line=dict(color="#aec7e8", dash="dot"),
-        marker=dict(color=delay_colors, size=10),
-        text=[
-            f"Delay: {int(d)} min" if pd.notna(d) else "No data"
-            for d in route_stops["differenceInMinutes"]
-        ],
-        hovertemplate="%{y}<br>%{x}<br>%{text}<extra></extra>",
-    ))
-    fig.update_layout(
-        xaxis_title="Scheduled Time",
-        yaxis_title="Station",
-        height=max(300, len(route_stops) * 28),
-        margin=dict(l=10, r=10, t=30, b=10),
-        legend=dict(orientation="h"),
-    )
-    st.plotly_chart(fig, use_container_width=True)
 
     # --- Raw data table ---
     st.markdown("**Raw Stop Data**")

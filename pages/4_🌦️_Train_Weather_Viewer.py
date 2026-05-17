@@ -4,7 +4,7 @@ import streamlit as st
 import folium
 import plotly.graph_objects as go
 from streamlit_folium import st_folium
-from utils.data_loader import load_matched_data, load_train_stations
+from utils.data_loader import load_matched_data, load_train_stations, load_ems_stations
 from utils.train_utils import get_unique_stations, get_trains_for_route, get_train_route
 from const import AVAILABLE_YEARS, AVAILABLE_MONTHS, DEFAULT_ORIGIN, DEFAULT_DESTINATION
 
@@ -96,6 +96,11 @@ if st.session_state.get("search_done"):
         else:
             delay_colors.append("#d62728")
 
+    offset_colors = [
+        "#d62728" if pd.notna(d) and d > 5 else "#f4a261"
+        for d in route_stops["differenceInMinutes_eachStation_offset"]
+    ]
+
     sched_labels = pd.to_datetime(route_stops["scheduledTime"]).dt.strftime("%H:%M")
 
     fig = go.Figure()
@@ -103,7 +108,7 @@ if st.session_state.get("search_done"):
         x=sched_labels,
         y=route_stops["differenceInMinutes"],
         mode="markers+lines",
-        name="Delay",
+        name="Delay (cumulative)",
         line=dict(color="#aec7e8"),
         marker=dict(color=delay_colors, size=10),
         text=[
@@ -111,6 +116,16 @@ if st.session_state.get("search_done"):
             for _, row in route_stops.iterrows()
         ],
         hovertemplate="%{text}<br>Delay: %{y} min<extra></extra>",
+    ))
+    fig.add_trace(go.Scatter(
+        x=sched_labels,
+        y=route_stops["differenceInMinutes_eachStation_offset"],
+        mode="markers+lines",
+        name="Delay change per station",
+        line=dict(color="#f4a261", dash="dash"),
+        marker=dict(symbol="diamond", color=offset_colors, size=8),
+        text=[row["stationName"] for _, row in route_stops.iterrows()],
+        hovertemplate="%{text}<br>Change: %{y} min<extra></extra>",
     ))
     fig.add_hline(y=0, line_dash="dot", line_color="gray", opacity=0.5)
     fig.update_layout(
@@ -121,7 +136,7 @@ if st.session_state.get("search_done"):
         legend=dict(orientation="h"),
         xaxis=dict(tickangle=-45),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Join with station metadata for lat/lon
     train_stations = load_train_stations()
@@ -132,6 +147,10 @@ if st.session_state.get("search_done"):
     )
     coords = route_with_coords.dropna(subset=["latitude", "longitude"])
 
+    # Build closest-EMS lookup from EMS metadata
+    ems_stations = load_ems_stations()
+    ems_lookup = ems_stations.set_index("station_name")[["latitude", "longitude"]].to_dict("index")
+
     # --- Folium route map ---
     st.markdown("**Route Map**")
     if not coords.empty:
@@ -140,6 +159,35 @@ if st.session_state.get("search_done"):
 
         polyline_coords = list(zip(coords["latitude"], coords["longitude"]))
         folium.PolyLine(polyline_coords, color="#1f77b4", weight=3, opacity=0.8).add_to(m)
+
+        # Draw closest EMS per train station (deduplicated)
+        seen_ems = set()
+        for _, row in coords.drop_duplicates(subset="stationShortCode").iterrows():
+            ems_name = row.get("closest_ems")
+            if pd.isna(ems_name) or ems_name not in ems_lookup:
+                continue
+            ems_coords = ems_lookup[ems_name]
+            ems_lat, ems_lng = ems_coords["latitude"], ems_coords["longitude"]
+            folium.PolyLine(
+                [[row["latitude"], row["longitude"]], [ems_lat, ems_lng]],
+                color="#888888",
+                weight=1.5,
+                opacity=0.7,
+                dash_array="6 4",
+                tooltip=ems_name,
+            ).add_to(m)
+            if ems_name not in seen_ems:
+                folium.CircleMarker(
+                    location=[ems_lat, ems_lng],
+                    radius=5,
+                    color="#888888",
+                    fill=True,
+                    fill_color="#bbbbbb",
+                    fill_opacity=0.8,
+                    tooltip=ems_name,
+                    popup=folium.Popup(f"<b>{ems_name}</b>", max_width=200),
+                ).add_to(m)
+                seen_ems.add(ems_name)
 
         for _, row in coords.iterrows():
             delay = row["differenceInMinutes"]
@@ -164,10 +212,133 @@ if st.session_state.get("search_done"):
                 tooltip=row["stationName"],
             ).add_to(m)
 
-        st_folium(m, use_container_width=True, height=650, returned_objects=[])
+        st_folium(m, use_container_width=True, height=850, returned_objects=[])
     else:
         st.warning("No coordinate data available for this train's stops.")
 
+    # --- Weather grid ---
+    st.divider()
+    st.markdown("**Weather along the route**")
+
+    # One weather observation per station (ARRIVAL and DEPARTURE share the same matched weather)
+    weather_stops = route_stops.drop_duplicates(subset="stationShortCode", keep="first").reset_index(drop=True)
+    weather_x = pd.to_datetime(weather_stops["scheduledTime"]).dt.strftime("%H:%M")
+    weather_station_names = weather_stops["stationName"].tolist()
+
+    _H = 260
+    _M = dict(l=10, r=10, t=35, b=70)
+    _LEGEND = dict(orientation="h", y=-0.38, font=dict(size=10))
+    _XTICK = dict(tickangle=-45, tickfont=dict(size=9))
+
+    def _weather_fig(title, traces, y_label):
+        f = go.Figure()
+        for name, col, color in traces:
+            if col in weather_stops.columns:
+                f.add_trace(go.Scatter(
+                    x=weather_x,
+                    y=weather_stops[col],
+                    mode="lines+markers",
+                    name=name,
+                    line=dict(color=color),
+                    marker=dict(size=5),
+                    text=weather_station_names,
+                    hovertemplate=f"%{{text}}<br>{name}: %{{y}}<extra></extra>",
+                ))
+        f.update_layout(
+            title=dict(text=title, font=dict(size=13)),
+            height=_H,
+            margin=_M,
+            yaxis_title=y_label,
+            legend=_LEGEND,
+            xaxis=_XTICK,
+        )
+        return f
+
+    weather_groups = [
+        ("Temperature (°C)",        [("Air temp",   "Air temperature",       "#e76f51"),
+                                      ("Dew point",  "Dew-point temperature", "#457b9d")], "°C"),
+        ("Wind (m/s)",              [("Speed",       "Wind speed",            "#2a9d8f"),
+                                      ("Gust",        "Gust speed",            "#e9c46a")], "m/s"),
+        ("Wind direction (°)",      [("Direction",   "Wind direction",        "#8ecae6")], "°"),
+        ("Relative humidity (%)",   [("Humidity",    "Relative humidity",     "#4cc9f0")], "%"),
+        ("Precipitation",           [("Amount (mm)", "Precipitation amount",  "#0077b6"),
+                                      ("Intensity (mm/h)", "Precipitation intensity", "#90e0ef")], "mm / mm·h⁻¹"),
+        ("Snow depth (cm)",         [("Snow depth",  "Snow depth",            "#adb5bd")], "cm"),
+        ("Pressure (hPa)",          [("Pressure",    "Pressure (msl)",        "#6a4c93")], "hPa"),
+        ("Horizontal visibility (m)",[("Visibility", "Horizontal visibility", "#52b788")], "m"),
+        ("Cloud amount (okta)",     [("Cloud",       "Cloud amount",          "#778da9")], "okta"),
+    ]
+
+    cols = st.columns(3)
+    for i, (title, traces, y_label) in enumerate(weather_groups):
+        if i > 0 and i % 3 == 0:
+            cols = st.columns(3)
+        with cols[i % 3]:
+            st.plotly_chart(_weather_fig(title, traces, y_label), width="stretch")
+
+    # --- Rolling weather grid ---
+    st.divider()
+    st.markdown("**Weather rolling windows along the route**")
+
+    _WINDOW_DASH = {"12h": "dash", "24h": "dot", "72h": "dashdot"}
+    _STAT_COLOR  = {"max": "#d62728", "min": "#1f77b4", "mean": "#ff7f0e"}
+
+    rolling_features = [
+        ("Air temperature",        "°C",    "#e76f51", ["12h","24h","72h"], ["max","min","mean"]),
+        ("Wind speed",             "m/s",   "#2a9d8f", ["12h","24h","72h"], ["max","min","mean"]),
+        ("Relative humidity",      "%",     "#4cc9f0", ["12h","24h","72h"], ["max","min","mean"]),
+        ("Precipitation amount",   "mm",    "#0077b6", ["12h","24h","72h"], ["mean"]),
+        ("Precipitation intensity","mm/h",  "#90e0ef", ["12h","24h","72h"], ["max","min","mean"]),
+        ("Snow depth",             "cm",    "#adb5bd", ["12h","24h","72h"], ["max","min","mean"]),
+        ("Pressure (msl)",         "hPa",   "#6a4c93", ["12h","24h","72h"], ["max","min","mean"]),
+        ("Horizontal visibility",  "m",     "#52b788", ["12h","24h","72h"], ["max","min","mean"]),
+        ("Cloud amount",           "okta",  "#778da9", ["12h","24h","72h"], ["max","min","mean"]),
+    ]
+
+    def _rolling_fig(feature, unit, inst_color, windows, stats):
+        f = go.Figure()
+        if feature in weather_stops.columns:
+            f.add_trace(go.Scatter(
+                x=weather_x,
+                y=weather_stops[feature],
+                mode="lines+markers",
+                name="Instant",
+                line=dict(color=inst_color, width=2),
+                marker=dict(size=5),
+                text=weather_station_names,
+                hovertemplate="%{text}<br>Instant: %{y}<extra></extra>",
+            ))
+        for window in windows:
+            for stat in stats:
+                col = f"{feature} ({window} {stat})"
+                if col in weather_stops.columns:
+                    f.add_trace(go.Scatter(
+                        x=weather_x,
+                        y=weather_stops[col],
+                        mode="lines",
+                        name=f"{window} {stat}",
+                        line=dict(color=_STAT_COLOR[stat], dash=_WINDOW_DASH[window], width=1),
+                        text=weather_station_names,
+                        hovertemplate=f"%{{text}}<br>{window} {stat}: %{{y}}<extra></extra>",
+                    ))
+        f.update_layout(
+            title=dict(text=f"{feature} ({unit})", font=dict(size=13)),
+            height=300,
+            margin=dict(l=10, r=10, t=35, b=80),
+            yaxis_title=unit,
+            legend=dict(orientation="h", y=-0.55, font=dict(size=9)),
+            xaxis=dict(tickangle=-45, tickfont=dict(size=9)),
+        )
+        return f
+
+    cols = st.columns(3)
+    for i, (feature, unit, inst_color, windows, stats) in enumerate(rolling_features):
+        if i > 0 and i % 3 == 0:
+            cols = st.columns(3)
+        with cols[i % 3]:
+            st.plotly_chart(_rolling_fig(feature, unit, inst_color, windows, stats), width="stretch")
+
     # --- Raw data table ---
+    st.divider()
     st.markdown("**Raw Stop Data**")
-    st.dataframe(route_stops, use_container_width=True, hide_index=True)
+    st.dataframe(route_stops, width="stretch", hide_index=True)
