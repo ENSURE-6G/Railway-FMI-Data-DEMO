@@ -19,12 +19,10 @@ DATA_SOURCE: str = "local"  # switch to "remote" to use Allas
 
 # Allas S3 configuration (used only when DATA_SOURCE == "remote")
 ALLAS_ENDPOINT_URL = "https://a3s.fi"
-ALLAS_TRAIN_BUCKET = "your-train-bucket-name"
-ALLAS_WEATHER_BUCKET = "your-weather-bucket-name"
-ALLAS_MATCHED_BUCKET = "your-matched-bucket-name"
+ALLAS_TRAIN_BUCKET = "train_flat_data"
+ALLAS_WEATHER_BUCKET = "weather_data"
+ALLAS_MATCHED_BUCKET = "matched_flat_Data"
 ```
-
-The bucket name constants must be filled in with the actual bucket names from the user's Allas project.
 
 ## `data_loader.py` Changes
 
