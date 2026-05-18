@@ -305,6 +305,8 @@ def test_load_weather_data_remote_error_returns_empty(monkeypatch):
     assert df.empty
 
     loader.load_weather_data.clear()
+
+
 def test_load_train_data_remote_error_returns_empty(monkeypatch):
     from unittest.mock import MagicMock
     import utils.data_loader as loader

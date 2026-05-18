@@ -25,7 +25,7 @@ DATA_SOURCE: str = "local"
 ALLAS_ENDPOINT_URL: str = "https://a3s.fi"
 ALLAS_TRAIN_BUCKET: str = "train_flat_data"
 ALLAS_WEATHER_BUCKET: str = "weather_data"
-ALLAS_MATCHED_BUCKET: str = "matched_flat_Data"
+ALLAS_MATCHED_BUCKET: str = "matched_flat_Data"  # capital D — matches actual bucket name on Allas
 
 TRAIN_CATEGORIES: list[str] = ["Long-distance", "Commuter", "Cargo"]
 TRAIN_TYPES: list[str] = ["IC", "S", "PYO", "HDM", "HL", "T"]
