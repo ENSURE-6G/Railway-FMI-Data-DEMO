@@ -55,12 +55,24 @@ def load_train_data(year: int, month: int) -> pd.DataFrame:
 
 @st.cache_data
 def load_weather_data(year: int, month: int) -> pd.DataFrame:
-    path = WEATHER_DATA_PATH / WEATHER_FILE_PATTERN.format(year=year, month=month)
-    if not path.exists():
-        return pd.DataFrame()
-    df = pd.read_csv(path)
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
-    return df
+    filename = WEATHER_FILE_PATTERN.format(year=year, month=month)
+    if DATA_SOURCE == "local":
+        path = WEATHER_DATA_PATH / filename
+        if not path.exists():
+            return pd.DataFrame()
+        df = pd.read_csv(path)
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        return df
+    else:
+        try:
+            client = _get_s3_client()
+            obj = client.get_object(Bucket=ALLAS_WEATHER_BUCKET, Key=filename)
+            df = pd.read_csv(io.BytesIO(obj["Body"].read()))
+            df["timestamp"] = pd.to_datetime(df["timestamp"])
+            return df
+        except Exception as e:
+            st.error(f"Could not load weather data from Allas: {e}")
+            return pd.DataFrame()
 
 
 @st.cache_data

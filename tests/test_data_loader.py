@@ -251,6 +251,60 @@ def test_load_train_data_remote_returns_dataframe(monkeypatch):
     loader.load_train_data.clear()
 
 
+def _make_weather_csv_bytes():
+    data = {
+        "timestamp": ["2024-01-01 00:00:00", "2024-01-01 01:00:00"],
+        "Air temperature": [-3.2, -2.8],
+        "Wind speed": [4.1, 3.9],
+        "Snow depth": [12.0, 11.5],
+        "station_name": ["Helsinki", "Helsinki"],
+    }
+    buf = io.BytesIO()
+    pd.DataFrame(data).to_csv(buf, index=False)
+    buf.seek(0)
+    return buf
+
+
+def test_load_weather_data_remote_returns_dataframe(monkeypatch):
+    from unittest.mock import MagicMock
+    import utils.data_loader as loader
+
+    mock_client = MagicMock()
+    mock_client.get_object.return_value = {"Body": _make_weather_csv_bytes()}
+
+    monkeypatch.setattr(loader, "DATA_SOURCE", "remote")
+    monkeypatch.setattr(loader, "_get_s3_client", lambda: mock_client)
+    loader.load_weather_data.clear()
+
+    df = loader.load_weather_data(2024, 1)
+
+    mock_client.get_object.assert_called_once_with(
+        Bucket="weather_data",
+        Key="fmi_weather_observations_2024_01.csv",
+    )
+    assert len(df) == 2
+    assert pd.api.types.is_datetime64_any_dtype(df["timestamp"])
+
+    loader.load_weather_data.clear()
+
+
+def test_load_weather_data_remote_error_returns_empty(monkeypatch):
+    from unittest.mock import MagicMock
+    import utils.data_loader as loader
+
+    mock_client = MagicMock()
+    mock_client.get_object.side_effect = Exception("timeout")
+
+    monkeypatch.setattr(loader, "DATA_SOURCE", "remote")
+    monkeypatch.setattr(loader, "_get_s3_client", lambda: mock_client)
+    monkeypatch.setattr("streamlit.error", lambda msg: None)
+    loader.load_weather_data.clear()
+
+    df = loader.load_weather_data(2024, 1)
+
+    assert df.empty
+
+    loader.load_weather_data.clear()
 def test_load_train_data_remote_error_returns_empty(monkeypatch):
     from unittest.mock import MagicMock
     import utils.data_loader as loader
