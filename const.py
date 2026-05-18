@@ -18,6 +18,15 @@ WEATHER_FILE_PATTERN = "fmi_weather_observations_{year}_{month:02d}.csv"
 MATCHED_DATA_PATH = _DATA_ROOT / "matched_flat_data"
 MATCHED_FILE_PATTERN = "matched_data_flat_{year}_{month:02d}.csv"
 
+# Data source: "local" loads from filesystem, "remote" fetches from CSC Allas (S3)
+DATA_SOURCE: str = "local"
+
+# Allas S3 configuration — used only when DATA_SOURCE == "remote"
+ALLAS_ENDPOINT_URL: str = "https://a3s.fi"
+ALLAS_TRAIN_BUCKET: str = "train_flat_data"
+ALLAS_WEATHER_BUCKET: str = "weather_data"
+ALLAS_MATCHED_BUCKET: str = "matched_flat_Data"
+
 TRAIN_CATEGORIES: list[str] = ["Long-distance", "Commuter", "Cargo"]
 TRAIN_TYPES: list[str] = ["IC", "S", "PYO", "HDM", "HL", "T"]
 
