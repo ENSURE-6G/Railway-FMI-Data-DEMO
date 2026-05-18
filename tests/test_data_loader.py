@@ -322,3 +322,84 @@ def test_load_train_data_remote_error_returns_empty(monkeypatch):
     assert df.empty
 
     loader.load_train_data.clear()
+
+
+def _make_matched_csv_bytes():
+    data = {
+        "trainNumber": [1, 1],
+        "departureDate": ["2024-01-01", "2024-01-01"],
+        "operatorUICCode": [10, 10],
+        "operatorShortCode": ["vr", "vr"],
+        "trainType": ["IC", "IC"],
+        "trainCategory": ["Long-distance", "Long-distance"],
+        "commuterLineID": ["", ""],
+        "runningCurrently": [False, False],
+        "cancelled": [False, False],
+        "version": [287293186071, 287293186071],
+        "timetableType": ["REGULAR", "REGULAR"],
+        "timetableAcceptanceDate": ["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"],
+        "stationName": ["Helsinki asema", "Tampere asema"],
+        "stationShortCode": ["HKI", "TPE"],
+        "stationUICCode": [1, 140],
+        "countryCode": ["FI", "FI"],
+        "type": ["DEPARTURE", "ARRIVAL"],
+        "trainStopping": [True, True],
+        "commercialStop": [True, True],
+        "commercialTrack": ["9", "4"],
+        "stop_cancelled": [False, False],
+        "scheduledTime": ["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"],
+        "actualTime": ["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"],
+        "differenceInMinutes": [0.0, 1.0],
+        "causes": ["[]", "[]"],
+        "trainReady": ["", ""],
+        "closest_ems": ["Helsinki", "Tampere"],
+        "Air temperature": [-3.2, -2.8],
+        "Wind speed": [4.1, 3.9],
+        "Snow depth": [12.0, 11.5],
+    }
+    buf = io.BytesIO()
+    pd.DataFrame(data).to_csv(buf, index=False)
+    buf.seek(0)
+    return buf
+
+
+def test_load_matched_data_remote_returns_dataframe(monkeypatch):
+    from unittest.mock import MagicMock
+    import utils.data_loader as loader
+
+    mock_client = MagicMock()
+    mock_client.get_object.return_value = {"Body": _make_matched_csv_bytes()}
+
+    monkeypatch.setattr(loader, "DATA_SOURCE", "remote")
+    monkeypatch.setattr(loader, "_get_s3_client", lambda: mock_client)
+    loader.load_matched_data.clear()
+
+    df = loader.load_matched_data(2024, 1)
+
+    mock_client.get_object.assert_called_once_with(
+        Bucket="matched_flat_Data",
+        Key="matched_data_flat_2024_01.csv",
+    )
+    assert len(df) == 2
+    assert pd.api.types.is_datetime64_any_dtype(df["scheduledTime"])
+
+    loader.load_matched_data.clear()
+
+
+def test_load_matched_data_remote_error_returns_empty(monkeypatch):
+    from unittest.mock import MagicMock
+    import utils.data_loader as loader
+
+    mock_client = MagicMock()
+    mock_client.get_object.side_effect = Exception("NoSuchKey")
+
+    monkeypatch.setattr(loader, "DATA_SOURCE", "remote")
+    monkeypatch.setattr(loader, "_get_s3_client", lambda: mock_client)
+    monkeypatch.setattr("streamlit.error", lambda msg: None)
+    loader.load_matched_data.clear()
+
+    df = loader.load_matched_data(2024, 1)
+
+    assert df.empty
+
+    loader.load_matched_data.clear()
