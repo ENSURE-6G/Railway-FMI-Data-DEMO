@@ -1,10 +1,30 @@
+import io
+import os
+
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
+
 from const import (
     TRAIN_DATA_PATH, WEATHER_DATA_PATH, METADATA_PATH,
     TRAIN_FILE_PATTERN, WEATHER_FILE_PATTERN,
     MATCHED_DATA_PATH, MATCHED_FILE_PATTERN,
+    DATA_SOURCE,
+    ALLAS_ENDPOINT_URL, ALLAS_TRAIN_BUCKET, ALLAS_WEATHER_BUCKET, ALLAS_MATCHED_BUCKET,
 )
+
+load_dotenv()
+
+
+@st.cache_resource
+def _get_s3_client():
+    import boto3
+    return boto3.client(
+        "s3",
+        endpoint_url=ALLAS_ENDPOINT_URL,
+        aws_access_key_id=os.environ["ALLAS_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["ALLAS_SECRET_ACCESS_KEY"],
+    )
 
 
 @st.cache_data

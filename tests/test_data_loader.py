@@ -173,3 +173,19 @@ def test_load_matched_data_parses_datetime_columns(patched_matched_loader):
 def test_load_matched_data_missing_file_returns_empty_dataframe(patched_matched_loader_empty):
     df = load_matched_data(2099, 1)
     assert df.empty
+
+
+def test_get_s3_client_uses_env_credentials(monkeypatch):
+    import os
+    monkeypatch.setenv("ALLAS_ACCESS_KEY_ID", "test-key-id")
+    monkeypatch.setenv("ALLAS_SECRET_ACCESS_KEY", "test-secret")
+
+    import utils.data_loader as loader
+    loader._get_s3_client.clear()
+
+    client = loader._get_s3_client()
+
+    meta = client.meta
+    assert meta.endpoint_url == "https://a3s.fi"
+
+    loader._get_s3_client.clear()
