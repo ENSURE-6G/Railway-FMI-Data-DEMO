@@ -38,7 +38,7 @@ def _get_s3_client():
     )
 
 
-@st.cache_data
+@st.cache_data(ttl=3600, max_entries=6)
 def load_train_data(year: int, month: int) -> pd.DataFrame:
     filename = TRAIN_FILE_PATTERN.format(year=year, month=month)
     if DATA_SOURCE == "local":
@@ -64,7 +64,7 @@ def load_train_data(year: int, month: int) -> pd.DataFrame:
             return pd.DataFrame()
 
 
-@st.cache_data
+@st.cache_data(ttl=3600, max_entries=6)
 def load_weather_data(year: int, month: int) -> pd.DataFrame:
     filename = WEATHER_FILE_PATTERN.format(year=year, month=month)
     if DATA_SOURCE == "local":
@@ -86,7 +86,7 @@ def load_weather_data(year: int, month: int) -> pd.DataFrame:
             return pd.DataFrame()
 
 
-@st.cache_data
+@st.cache_data(ttl=3600, max_entries=6)
 def load_matched_data(year: int, month: int) -> pd.DataFrame:
     filename = MATCHED_FILE_PATTERN.format(year=year, month=month)
     if DATA_SOURCE == "local":
@@ -112,11 +112,11 @@ def load_matched_data(year: int, month: int) -> pd.DataFrame:
             return pd.DataFrame()
 
 
-@st.cache_data
+@st.cache_data(ttl=86400)
 def load_train_stations() -> pd.DataFrame:
     return pd.read_csv(METADATA_PATH / "metadata_train_stations.csv")
 
 
-@st.cache_data
+@st.cache_data(ttl=86400)
 def load_ems_stations() -> pd.DataFrame:
     return pd.read_csv(METADATA_PATH / "metadata_fmi_ems_stations.csv")
