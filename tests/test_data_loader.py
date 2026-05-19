@@ -178,17 +178,58 @@ def test_load_matched_data_missing_file_returns_empty_dataframe(patched_matched_
 
 
 def test_get_s3_client_uses_env_credentials(monkeypatch):
-    import os
+    import streamlit as st
+    import utils.data_loader as loader
+
+    class _NoSecrets:
+        def __getitem__(self, key):
+            raise FileNotFoundError("No secrets.toml")
+
+    monkeypatch.setattr(st, "secrets", _NoSecrets())
     monkeypatch.setenv("ALLAS_ACCESS_KEY_ID", "test-key-id")
     monkeypatch.setenv("ALLAS_SECRET_ACCESS_KEY", "test-secret")
-
-    import utils.data_loader as loader
     loader._get_s3_client.clear()
 
     client = loader._get_s3_client()
 
-    meta = client.meta
-    assert meta.endpoint_url == "https://a3s.fi"
+    assert client.meta.endpoint_url == "https://a3s.fi"
+
+    loader._get_s3_client.clear()
+
+
+def test_get_s3_client_uses_st_secrets(monkeypatch):
+    import streamlit as st
+    import utils.data_loader as loader
+
+    monkeypatch.setattr(st, "secrets", {
+        "ALLAS_ACCESS_KEY_ID": "secrets-key",
+        "ALLAS_SECRET_ACCESS_KEY": "secrets-secret",
+    })
+    loader._get_s3_client.clear()
+
+    client = loader._get_s3_client()
+
+    assert client.meta.endpoint_url == "https://a3s.fi"
+
+    loader._get_s3_client.clear()
+
+
+def test_get_s3_client_falls_back_to_env_when_no_secrets_toml(monkeypatch):
+    import streamlit as st
+    import utils.data_loader as loader
+
+    class _NoSecrets:
+        def __getitem__(self, key):
+            raise FileNotFoundError("No secrets.toml")
+
+    monkeypatch.setattr(st, "secrets", _NoSecrets())
+    monkeypatch.setenv("ALLAS_ACCESS_KEY_ID", "env-key")
+    monkeypatch.setenv("ALLAS_SECRET_ACCESS_KEY", "env-secret")
+    loader._get_s3_client.clear()
+
+    client = loader._get_s3_client()
+
+    assert client.meta.endpoint_url == "https://a3s.fi"
 
     loader._get_s3_client.clear()
 

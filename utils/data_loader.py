@@ -19,12 +19,16 @@ load_dotenv()
 @st.cache_resource
 def _get_s3_client():
     import boto3
-    key = os.environ.get("ALLAS_ACCESS_KEY_ID")
-    secret = os.environ.get("ALLAS_SECRET_ACCESS_KEY")
+    try:
+        key = st.secrets["ALLAS_ACCESS_KEY_ID"]
+        secret = st.secrets["ALLAS_SECRET_ACCESS_KEY"]
+    except (KeyError, FileNotFoundError):
+        key = os.environ.get("ALLAS_ACCESS_KEY_ID")
+        secret = os.environ.get("ALLAS_SECRET_ACCESS_KEY")
     if not key or not secret:
         raise RuntimeError(
-            "ALLAS_ACCESS_KEY_ID and ALLAS_SECRET_ACCESS_KEY must be set in .env "
-            "when DATA_SOURCE='remote'. See .env.example."
+            "ALLAS_ACCESS_KEY_ID and ALLAS_SECRET_ACCESS_KEY must be set in "
+            ".streamlit/secrets.toml (local) or Streamlit Cloud secrets (deployed)."
         )
     return boto3.client(
         "s3",
