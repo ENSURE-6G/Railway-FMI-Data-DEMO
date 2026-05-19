@@ -12,3 +12,5 @@ dependencies:
     - folium
     - streamlit-folium
     - pytest
+    - boto3
+    - python-dotenv
