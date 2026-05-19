@@ -379,7 +379,7 @@ def test_load_matched_data_remote_returns_dataframe(monkeypatch):
     df = loader.load_matched_data(2024, 1)
 
     mock_client.get_object.assert_called_once_with(
-        Bucket="matched_flat_Data",
+        Bucket="matched_flat_data",
         Key="matched_data_flat_2024_01.csv",
     )
     assert len(df) == 2
