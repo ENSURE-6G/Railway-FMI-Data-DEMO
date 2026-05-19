@@ -54,6 +54,7 @@ def flat_csv(tmp_path):
 @pytest.fixture
 def patched_loader(flat_csv, monkeypatch):
     import utils.data_loader as loader
+    monkeypatch.setattr(loader, "DATA_SOURCE", "local")
     monkeypatch.setattr(loader, "TRAIN_DATA_PATH", flat_csv)
     monkeypatch.setattr(loader, "TRAIN_FILE_PATTERN", "all_trains_data_flat_{year}_{month:02d}.csv")
     load_train_data.clear()
@@ -64,6 +65,7 @@ def patched_loader(flat_csv, monkeypatch):
 @pytest.fixture
 def patched_loader_empty(tmp_path, monkeypatch):
     import utils.data_loader as loader
+    monkeypatch.setattr(loader, "DATA_SOURCE", "local")
     monkeypatch.setattr(loader, "TRAIN_DATA_PATH", tmp_path)
     monkeypatch.setattr(loader, "TRAIN_FILE_PATTERN", "all_trains_data_flat_{year}_{month:02d}.csv")
     load_train_data.clear()
@@ -141,6 +143,7 @@ def matched_csv(tmp_path):
 @pytest.fixture
 def patched_matched_loader(matched_csv, monkeypatch):
     import utils.data_loader as loader
+    monkeypatch.setattr(loader, "DATA_SOURCE", "local")
     monkeypatch.setattr(loader, "MATCHED_DATA_PATH", matched_csv)
     monkeypatch.setattr(loader, "MATCHED_FILE_PATTERN", "matched_data_flat_{year}_{month:02d}.csv")
     load_matched_data.clear()
@@ -151,6 +154,7 @@ def patched_matched_loader(matched_csv, monkeypatch):
 @pytest.fixture
 def patched_matched_loader_empty(tmp_path, monkeypatch):
     import utils.data_loader as loader
+    monkeypatch.setattr(loader, "DATA_SOURCE", "local")
     monkeypatch.setattr(loader, "MATCHED_DATA_PATH", tmp_path)
     monkeypatch.setattr(loader, "MATCHED_FILE_PATTERN", "matched_data_flat_{year}_{month:02d}.csv")
     load_matched_data.clear()
