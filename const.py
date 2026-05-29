@@ -7,7 +7,7 @@ _PROJECT_ROOT = Path(__file__).parent
 _DATA_ROOT = _PROJECT_ROOT.parent / "Railway-FMI-Data-CSV-Files-v2"
 
 TRAIN_DATA_PATH = _DATA_ROOT / "train_flat_data"
-WEATHER_DATA_PATH = _DATA_ROOT / "weather_data"
+WEATHER_DATA_PATH = _DATA_ROOT / "weather_with_rolling_windows_data"
 METADATA_PATH = _PROJECT_ROOT / "metadata"
 
 AVAILABLE_YEARS: list[int] = [2024, 2025]
@@ -24,7 +24,7 @@ DATA_SOURCE: str = "remote"
 # Allas S3 configuration — used only when DATA_SOURCE == "remote"
 ALLAS_ENDPOINT_URL: str = "https://a3s.fi"
 ALLAS_TRAIN_BUCKET: str = "train_flat_data"
-ALLAS_WEATHER_BUCKET: str = "weather_data"
+ALLAS_WEATHER_BUCKET: str = "weather_with_rolling_windows_data"
 ALLAS_MATCHED_BUCKET: str = "matched_flat_data"
 
 TRAIN_CATEGORIES: list[str] = ["Long-distance", "Commuter", "Cargo"]
