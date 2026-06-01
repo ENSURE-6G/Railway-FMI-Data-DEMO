@@ -14,9 +14,9 @@ AVAILABLE_YEARS: list[int] = [2024, 2025]
 AVAILABLE_MONTHS: list[int] = list(range(1, 13))
 
 TRAIN_FILE_PATTERN = "all_trains_data_flat_{year}_{month:02d}.parquet"
-WEATHER_FILE_PATTERN = "fmi_weather_observations_{year}_{month:02d}.csv"
+WEATHER_FILE_PATTERN = "fmi_weather_observations_{year}_{month:02d}.parquet"
 MATCHED_DATA_PATH = _DATA_ROOT / "matched_flat_data"
-MATCHED_FILE_PATTERN = "matched_data_flat_{year}_{month:02d}.csv"
+MATCHED_FILE_PATTERN = "matched_data_flat_{year}_{month:02d}.parquet"
 
 # Data source: "local" loads from filesystem, "remote" fetches from CSC Allas (S3)
 DATA_SOURCE: str = "remote"
