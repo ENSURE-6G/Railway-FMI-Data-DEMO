@@ -6,7 +6,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from const import (
-    TRAIN_DATA_PATH, WEATHER_DATA_PATH, METADATA_PATH,
+    TRAIN_DATA_PATH, WEATHER_DATA_PATH, METADATA_PATH, STATISTICS_PATH,
     TRAIN_FILE_PATTERN, WEATHER_FILE_PATTERN,
     MATCHED_DATA_PATH, MATCHED_FILE_PATTERN,
     DATA_SOURCE,
@@ -105,3 +105,10 @@ def load_train_stations() -> pd.DataFrame:
 @st.cache_data(ttl=86400)
 def load_ems_stations() -> pd.DataFrame:
     return pd.read_csv(METADATA_PATH / "metadata_fmi_ems_stations.csv")
+
+
+@st.cache_data
+def load_delay_stats() -> pd.DataFrame:
+    df = pd.read_csv(STATISTICS_PATH / "delay_table_differenceInMinutes.csv")
+    df["date"] = pd.to_datetime({"year": df["year"], "month": df["month"], "day": df["day_of_month"]})
+    return df

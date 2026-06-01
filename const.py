@@ -9,6 +9,7 @@ _DATA_ROOT = _PROJECT_ROOT.parent / "Railway-FMI-Data-CSV-Files-v2"
 TRAIN_DATA_PATH = _DATA_ROOT / "train_flat_data"
 WEATHER_DATA_PATH = _DATA_ROOT / "weather_with_rolling_windows_data"
 METADATA_PATH = _PROJECT_ROOT / "metadata"
+STATISTICS_PATH = _PROJECT_ROOT / "statistics"
 
 AVAILABLE_YEARS: list[int] = list(range(2018, 2026))
 AVAILABLE_MONTHS: list[int] = list(range(1, 13))

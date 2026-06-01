@@ -1,0 +1,26 @@
+column,description
+year,Calendar year of the departure date.
+month,Calendar month of the departure date (1–12).
+day_of_month,Day within the month (1–31).
+day_of_week,"Day of the week (1=Monday, 7=Sunday)."
+total_trains_on_route,Number of distinct trains that departed on this day.
+total_schedules_by_day,Total individual station stops scheduled across all trains on this day.
+avg_stops_per_train,Average stops per train (total_schedules_by_day / total_trains_on_route). Higher values indicate longer or more complex routes.
+cancelled_trains_by_day,Trains that were fully cancelled at the train level and never ran.
+cancelled_stops_by_day,Individual station stops cancelled within otherwise-running trains.
+delay_count_by_day,Station stops delayed by at least the configured threshold (DELAY_LONG_DISTANCE_TRAINS minutes).
+delay_rate,Fraction of all scheduled stops that were delayed (delay_count_by_day / total_schedules_by_day). Main normalised punctuality metric.
+delay_count_arrivals,Delayed stops where the stop type is ARRIVAL.
+delay_count_departures,Delayed stops where the stop type is DEPARTURE.
+max_delay_minutes,Maximum single delay recorded across all stops on this day (minutes).
+avg_delay_minutes,Mean delay across all delayed stops on this day (minutes). Only counts stops meeting the threshold.
+median_delay_minutes,Median delay across all delayed stops (minutes). More robust to extreme outlier delays than the mean.
+delays_5_15min,"Delayed stops with delay in [5, 15) minutes."
+delays_15_30min,"Delayed stops with delay in [15, 30) minutes."
+delays_30_60min,"Delayed stops with delay in [30, 60) minutes."
+delays_over_60min,Delayed stops with delay >= 60 minutes.
+first_stop_delay_count,Trains already delayed at their first stop (delay >= threshold at origin). Separates origin-departure issues from en-route accumulation.
+delay_propagation_ratio,mean(differenceInMinutes_eachStation_offset) / mean(differenceInMinutes) over stops with a positive raw delay. >1: delays growing along the route; <1: crews recovering time; ~1: stable.
+delay_count_by_train_type,"JSON dict mapping each train type (IC, S, P, …) to the number of its delayed stops on this day."
+top_10_common_delays,"The 10 most frequently occurring delay values (minutes) across all delayed stops, ordered by frequency."
+rolling_delay_rate_7d,7-row rolling mean of delay_rate computed over the full sorted history in this file. Smooths day-to-day variability to reveal trends.
