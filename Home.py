@@ -137,7 +137,7 @@ m.get_root().html.add_child(folium.Element(legend_html))
 
 map_data = st_folium(
     m,
-    use_container_width=True,
+    width='stretch',
     height=750,
     returned_objects=["last_object_clicked"],
     center=tuple(map_center),

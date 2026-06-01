@@ -121,7 +121,7 @@ if st.session_state.get("search_done"):
         legend=dict(orientation="h"),
         xaxis=dict(tickangle=-45),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     # Join with station metadata for lat/lon
     train_stations = load_train_stations()
@@ -164,10 +164,10 @@ if st.session_state.get("search_done"):
                 tooltip=row["stationName"],
             ).add_to(m)
 
-        st_folium(m, use_container_width=True, height=650, returned_objects=[])
+        st_folium(m, width='stretch', height=650, returned_objects=[])
     else:
         st.warning("No coordinate data available for this train's stops.")
 
     # --- Raw data table ---
     st.markdown("**Raw Stop Data**")
-    st.dataframe(route_stops, use_container_width=True, hide_index=True)
+    st.dataframe(route_stops, width='stretch', hide_index=True)

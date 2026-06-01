@@ -44,7 +44,7 @@ for _, row in ems_stations.iterrows():
         tooltip=str(row["station_name"]),
     ).add_to(m)
 
-map_result = st_folium(m, use_container_width=True, height=450, returned_objects=["last_object_clicked_popup"])
+map_result = st_folium(m, width='stretch', height=450, returned_objects=["last_object_clicked_popup"])
 
 # Extract selected station name from map click
 selected_station = None
@@ -98,26 +98,26 @@ if selected_station:
     with row1_col1:
         st.plotly_chart(
             make_line_chart(ts_df, "Air temperature", "Air Temperature", "°C"),
-            use_container_width=True,
+            width='stretch',
         )
     with row1_col2:
         st.plotly_chart(
             make_line_chart(ts_df, "Wind speed", "Wind Speed", "m/s"),
-            use_container_width=True,
+            width='stretch',
         )
     with row2_col1:
         st.plotly_chart(
             make_line_chart(ts_df, "Precipitation amount", "Precipitation Amount", "mm"),
-            use_container_width=True,
+            width='stretch',
         )
     with row2_col2:
         st.plotly_chart(
             make_line_chart(ts_df, "Snow depth", "Snow Depth", "cm"),
-            use_container_width=True,
+            width='stretch',
         )
 
     # --- Raw data table ---
     st.markdown("**Raw Station Data**")
-    st.dataframe(ts_df, use_container_width=True, hide_index=True)
+    st.dataframe(ts_df, width='stretch', hide_index=True)
 else:
     st.info("Click a station on the map or select one from the dropdown to see its data.")
