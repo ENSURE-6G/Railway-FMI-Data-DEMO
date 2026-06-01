@@ -324,7 +324,7 @@ def test_load_weather_data_remote_returns_dataframe(monkeypatch):
     df = loader.load_weather_data(2024, 1)
 
     mock_client.get_object.assert_called_once_with(
-        Bucket="weather_with_rolling_windows_data",
+        Bucket="weather_data",
         Key="fmi_weather_observations_2024_01.parquet",
     )
     assert len(df) == 2
