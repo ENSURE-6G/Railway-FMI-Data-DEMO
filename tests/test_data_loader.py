@@ -101,10 +101,10 @@ MATCHED_COLUMNS = [
 
 
 @pytest.fixture
-def matched_csv(tmp_path):
+def matched_parquet(tmp_path):
     data = {
         "trainNumber": [1, 1],
-        "departureDate": ["2024-01-01", "2024-01-01"],
+        "departureDate": pd.to_datetime(["2024-01-01", "2024-01-01"]),
         "operatorUICCode": [10, 10],
         "operatorShortCode": ["vr", "vr"],
         "trainType": ["IC", "IC"],
@@ -114,7 +114,7 @@ def matched_csv(tmp_path):
         "cancelled": [False, False],
         "version": [287293186071, 287293186071],
         "timetableType": ["REGULAR", "REGULAR"],
-        "timetableAcceptanceDate": ["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"],
+        "timetableAcceptanceDate": pd.to_datetime(["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"]),
         "stationName": ["Helsinki asema", "Tampere asema"],
         "stationShortCode": ["HKI", "TPE"],
         "stationUICCode": [1, 140],
@@ -124,8 +124,8 @@ def matched_csv(tmp_path):
         "commercialStop": [True, True],
         "commercialTrack": ["9", "4"],
         "stop_cancelled": [False, False],
-        "scheduledTime": ["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"],
-        "actualTime": ["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"],
+        "scheduledTime": pd.to_datetime(["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"]),
+        "actualTime": pd.to_datetime(["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"]),
         "differenceInMinutes": [0.0, 1.0],
         "causes": ["[]", "[]"],
         "trainReady": ["", ""],
@@ -135,17 +135,17 @@ def matched_csv(tmp_path):
         "Snow depth": [12.0, 11.5],
     }
     df = pd.DataFrame(data)
-    path = tmp_path / "matched_data_flat_2024_01.csv"
-    df.to_csv(path, index=False)
+    path = tmp_path / "matched_data_flat_2024_01.parquet"
+    df.to_parquet(path, index=False)
     return tmp_path
 
 
 @pytest.fixture
-def patched_matched_loader(matched_csv, monkeypatch):
+def patched_matched_loader(matched_parquet, monkeypatch):
     import utils.data_loader as loader
     monkeypatch.setattr(loader, "DATA_SOURCE", "local")
-    monkeypatch.setattr(loader, "MATCHED_DATA_PATH", matched_csv)
-    monkeypatch.setattr(loader, "MATCHED_FILE_PATTERN", "matched_data_flat_{year}_{month:02d}.csv")
+    monkeypatch.setattr(loader, "MATCHED_DATA_PATH", matched_parquet)
+    monkeypatch.setattr(loader, "MATCHED_FILE_PATTERN", "matched_data_flat_{year}_{month:02d}.parquet")
     load_matched_data.clear()
     yield loader
     load_matched_data.clear()
@@ -156,7 +156,7 @@ def patched_matched_loader_empty(tmp_path, monkeypatch):
     import utils.data_loader as loader
     monkeypatch.setattr(loader, "DATA_SOURCE", "local")
     monkeypatch.setattr(loader, "MATCHED_DATA_PATH", tmp_path)
-    monkeypatch.setattr(loader, "MATCHED_FILE_PATTERN", "matched_data_flat_{year}_{month:02d}.csv")
+    monkeypatch.setattr(loader, "MATCHED_FILE_PATTERN", "matched_data_flat_{year}_{month:02d}.parquet")
     load_matched_data.clear()
     yield loader
     load_matched_data.clear()
@@ -296,16 +296,16 @@ def test_load_train_data_remote_returns_dataframe(monkeypatch):
     loader.load_train_data.clear()
 
 
-def _make_weather_csv_bytes():
+def _make_weather_parquet_bytes():
     data = {
-        "timestamp": ["2024-01-01 00:00:00", "2024-01-01 01:00:00"],
+        "timestamp": pd.to_datetime(["2024-01-01 00:00:00", "2024-01-01 01:00:00"]),
         "Air temperature": [-3.2, -2.8],
         "Wind speed": [4.1, 3.9],
         "Snow depth": [12.0, 11.5],
         "station_name": ["Helsinki", "Helsinki"],
     }
     buf = io.BytesIO()
-    pd.DataFrame(data).to_csv(buf, index=False)
+    pd.DataFrame(data).to_parquet(buf, index=False)
     buf.seek(0)
     return buf
 
@@ -315,7 +315,7 @@ def test_load_weather_data_remote_returns_dataframe(monkeypatch):
     import utils.data_loader as loader
 
     mock_client = MagicMock()
-    mock_client.get_object.return_value = {"Body": _make_weather_csv_bytes()}
+    mock_client.get_object.return_value = {"Body": _make_weather_parquet_bytes()}
 
     monkeypatch.setattr(loader, "DATA_SOURCE", "remote")
     monkeypatch.setattr(loader, "_get_s3_client", lambda: mock_client)
@@ -324,8 +324,8 @@ def test_load_weather_data_remote_returns_dataframe(monkeypatch):
     df = loader.load_weather_data(2024, 1)
 
     mock_client.get_object.assert_called_once_with(
-        Bucket="weather_data",
-        Key="fmi_weather_observations_2024_01.csv",
+        Bucket="weather_with_rolling_windows_data",
+        Key="fmi_weather_observations_2024_01.parquet",
     )
     assert len(df) == 2
     assert pd.api.types.is_datetime64_any_dtype(df["timestamp"])
@@ -371,10 +371,10 @@ def test_load_train_data_remote_error_returns_empty(monkeypatch):
     loader.load_train_data.clear()
 
 
-def _make_matched_csv_bytes():
+def _make_matched_parquet_bytes():
     data = {
         "trainNumber": [1, 1],
-        "departureDate": ["2024-01-01", "2024-01-01"],
+        "departureDate": pd.to_datetime(["2024-01-01", "2024-01-01"]),
         "operatorUICCode": [10, 10],
         "operatorShortCode": ["vr", "vr"],
         "trainType": ["IC", "IC"],
@@ -384,7 +384,7 @@ def _make_matched_csv_bytes():
         "cancelled": [False, False],
         "version": [287293186071, 287293186071],
         "timetableType": ["REGULAR", "REGULAR"],
-        "timetableAcceptanceDate": ["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"],
+        "timetableAcceptanceDate": pd.to_datetime(["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"]),
         "stationName": ["Helsinki asema", "Tampere asema"],
         "stationShortCode": ["HKI", "TPE"],
         "stationUICCode": [1, 140],
@@ -394,8 +394,8 @@ def _make_matched_csv_bytes():
         "commercialStop": [True, True],
         "commercialTrack": ["9", "4"],
         "stop_cancelled": [False, False],
-        "scheduledTime": ["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"],
-        "actualTime": ["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"],
+        "scheduledTime": pd.to_datetime(["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"]),
+        "actualTime": pd.to_datetime(["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"]),
         "differenceInMinutes": [0.0, 1.0],
         "causes": ["[]", "[]"],
         "trainReady": ["", ""],
@@ -405,7 +405,7 @@ def _make_matched_csv_bytes():
         "Snow depth": [12.0, 11.5],
     }
     buf = io.BytesIO()
-    pd.DataFrame(data).to_csv(buf, index=False)
+    pd.DataFrame(data).to_parquet(buf, index=False)
     buf.seek(0)
     return buf
 
@@ -415,7 +415,7 @@ def test_load_matched_data_remote_returns_dataframe(monkeypatch):
     import utils.data_loader as loader
 
     mock_client = MagicMock()
-    mock_client.get_object.return_value = {"Body": _make_matched_csv_bytes()}
+    mock_client.get_object.return_value = {"Body": _make_matched_parquet_bytes()}
 
     monkeypatch.setattr(loader, "DATA_SOURCE", "remote")
     monkeypatch.setattr(loader, "_get_s3_client", lambda: mock_client)
@@ -425,7 +425,7 @@ def test_load_matched_data_remote_returns_dataframe(monkeypatch):
 
     mock_client.get_object.assert_called_once_with(
         Bucket="matched_flat_data",
-        Key="matched_data_flat_2024_01.csv",
+        Key="matched_data_flat_2024_01.parquet",
     )
     assert len(df) == 2
     assert pd.api.types.is_datetime64_any_dtype(df["scheduledTime"])
