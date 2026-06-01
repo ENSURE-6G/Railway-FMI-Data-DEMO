@@ -112,3 +112,10 @@ def load_delay_stats() -> pd.DataFrame:
     df = pd.read_csv(STATISTICS_PATH / "delay_table_differenceInMinutes.csv")
     df["date"] = pd.to_datetime({"year": df["year"], "month": df["month"], "day": df["day_of_month"]})
     return df
+
+
+@st.cache_data
+def load_delay_offset() -> pd.DataFrame:
+    df = pd.read_csv(STATISTICS_PATH / "delay_table_differenceInMinutes_eachStation_offset.csv")
+    df["date"] = pd.to_datetime({"year": df["year"], "month": df["month"], "day": df["day_of_month"]})
+    return df
