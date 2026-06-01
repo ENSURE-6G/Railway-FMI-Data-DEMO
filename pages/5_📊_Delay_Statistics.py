@@ -172,8 +172,10 @@ col_mon, col_dow = st.columns(2)
 
 monthly_avg = df.groupby("month")["delay_rate"].mean().reset_index()
 max_m = monthly_avg["delay_rate"].max()
+_m75 = monthly_avg["delay_rate"].quantile(0.75)
+_m50 = monthly_avg["delay_rate"].quantile(0.50)
 month_colors = [
-    f"rgb({int(60 + 195 * v / max_m)},{int(180 * (1 - v / max_m))},{int(220 * (1 - v / max_m))})"
+    "#E74C3C" if v >= _m75 else "#F39C12" if v >= _m50 else "#5B9BD5"
     for v in monthly_avg["delay_rate"]
 ]
 fig_mon = go.Figure(go.Bar(
@@ -196,8 +198,10 @@ with col_mon:
 
 dow_avg = df.groupby("day_of_week")["delay_rate"].mean().reset_index().sort_values("day_of_week")
 max_d = dow_avg["delay_rate"].max()
+_d75 = dow_avg["delay_rate"].quantile(0.75)
+_d50 = dow_avg["delay_rate"].quantile(0.50)
 dow_colors = [
-    f"rgb({int(60 + 195 * v / max_d)},{int(180 * (1 - v / max_d))},{int(220 * (1 - v / max_d))})"
+    "#E74C3C" if v >= _d75 else "#F39C12" if v >= _d50 else "#5B9BD5"
     for v in dow_avg["delay_rate"]
 ]
 fig_dow = go.Figure(go.Bar(
