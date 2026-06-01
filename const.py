@@ -10,7 +10,7 @@ TRAIN_DATA_PATH = _DATA_ROOT / "train_flat_data"
 WEATHER_DATA_PATH = _DATA_ROOT / "weather_with_rolling_windows_data"
 METADATA_PATH = _PROJECT_ROOT / "metadata"
 
-AVAILABLE_YEARS: list[int] = [2024, 2025]
+AVAILABLE_YEARS: list[int] = list(range(2018, 2026))
 AVAILABLE_MONTHS: list[int] = list(range(1, 13))
 
 TRAIN_FILE_PATTERN = "all_trains_data_flat_{year}_{month:02d}.parquet"
