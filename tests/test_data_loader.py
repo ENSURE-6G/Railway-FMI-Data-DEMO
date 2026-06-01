@@ -16,10 +16,10 @@ FLAT_COLUMNS = [
 
 
 @pytest.fixture
-def flat_csv(tmp_path):
+def flat_parquet(tmp_path):
     data = {
         "trainNumber": [1, 1],
-        "departureDate": ["2024-01-01", "2024-01-01"],
+        "departureDate": pd.to_datetime(["2024-01-01", "2024-01-01"]),
         "operatorUICCode": [10, 10],
         "operatorShortCode": ["vr", "vr"],
         "trainType": ["IC", "IC"],
@@ -29,7 +29,7 @@ def flat_csv(tmp_path):
         "cancelled": [False, False],
         "version": [287293186071, 287293186071],
         "timetableType": ["REGULAR", "REGULAR"],
-        "timetableAcceptanceDate": ["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"],
+        "timetableAcceptanceDate": pd.to_datetime(["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"]),
         "stationName": ["Helsinki asema", "Tampere asema"],
         "stationShortCode": ["HKI", "TPE"],
         "stationUICCode": [1, 140],
@@ -39,24 +39,24 @@ def flat_csv(tmp_path):
         "commercialStop": [True, True],
         "commercialTrack": ["9", "4"],
         "stop_cancelled": [False, False],
-        "scheduledTime": ["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"],
-        "actualTime": ["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"],
+        "scheduledTime": pd.to_datetime(["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"]),
+        "actualTime": pd.to_datetime(["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"]),
         "differenceInMinutes": [0.0, 1.0],
         "causes": ["[]", "[]"],
         "trainReady": ["", ""],
     }
     df = pd.DataFrame(data)
-    path = tmp_path / "all_trains_data_flat_2024_01.csv"
-    df.to_csv(path, index=False)
+    path = tmp_path / "all_trains_data_flat_2024_01.parquet"
+    df.to_parquet(path, index=False)
     return tmp_path
 
 
 @pytest.fixture
-def patched_loader(flat_csv, monkeypatch):
+def patched_loader(flat_parquet, monkeypatch):
     import utils.data_loader as loader
     monkeypatch.setattr(loader, "DATA_SOURCE", "local")
-    monkeypatch.setattr(loader, "TRAIN_DATA_PATH", flat_csv)
-    monkeypatch.setattr(loader, "TRAIN_FILE_PATTERN", "all_trains_data_flat_{year}_{month:02d}.csv")
+    monkeypatch.setattr(loader, "TRAIN_DATA_PATH", flat_parquet)
+    monkeypatch.setattr(loader, "TRAIN_FILE_PATTERN", "all_trains_data_flat_{year}_{month:02d}.parquet")
     load_train_data.clear()
     yield loader
     load_train_data.clear()
@@ -67,7 +67,7 @@ def patched_loader_empty(tmp_path, monkeypatch):
     import utils.data_loader as loader
     monkeypatch.setattr(loader, "DATA_SOURCE", "local")
     monkeypatch.setattr(loader, "TRAIN_DATA_PATH", tmp_path)
-    monkeypatch.setattr(loader, "TRAIN_FILE_PATTERN", "all_trains_data_flat_{year}_{month:02d}.csv")
+    monkeypatch.setattr(loader, "TRAIN_FILE_PATTERN", "all_trains_data_flat_{year}_{month:02d}.parquet")
     load_train_data.clear()
     yield loader
     load_train_data.clear()
@@ -238,10 +238,10 @@ def test_get_s3_client_falls_back_to_env_when_no_secrets_toml(monkeypatch):
     loader._get_s3_client.clear()
 
 
-def _make_train_csv_bytes():
+def _make_train_parquet_bytes():
     data = {
         "trainNumber": [1, 1],
-        "departureDate": ["2024-01-01", "2024-01-01"],
+        "departureDate": pd.to_datetime(["2024-01-01", "2024-01-01"]),
         "operatorUICCode": [10, 10],
         "operatorShortCode": ["vr", "vr"],
         "trainType": ["IC", "IC"],
@@ -251,7 +251,7 @@ def _make_train_csv_bytes():
         "cancelled": [False, False],
         "version": [287293186071, 287293186071],
         "timetableType": ["REGULAR", "REGULAR"],
-        "timetableAcceptanceDate": ["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"],
+        "timetableAcceptanceDate": pd.to_datetime(["2023-11-02T05:57:22.000Z", "2023-11-02T05:57:22.000Z"]),
         "stationName": ["Helsinki asema", "Tampere asema"],
         "stationShortCode": ["HKI", "TPE"],
         "stationUICCode": [1, 140],
@@ -261,14 +261,14 @@ def _make_train_csv_bytes():
         "commercialStop": [True, True],
         "commercialTrack": ["9", "4"],
         "stop_cancelled": [False, False],
-        "scheduledTime": ["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"],
-        "actualTime": ["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"],
+        "scheduledTime": pd.to_datetime(["2024-01-01T04:57:00.000Z", "2024-01-01T06:57:00.000Z"]),
+        "actualTime": pd.to_datetime(["2024-01-01T04:57:21.000Z", "2024-01-01T06:58:00.000Z"]),
         "differenceInMinutes": [0.0, 1.0],
         "causes": ["[]", "[]"],
         "trainReady": ["", ""],
     }
     buf = io.BytesIO()
-    pd.DataFrame(data).to_csv(buf, index=False)
+    pd.DataFrame(data).to_parquet(buf, index=False)
     buf.seek(0)
     return buf
 
@@ -278,7 +278,7 @@ def test_load_train_data_remote_returns_dataframe(monkeypatch):
     import utils.data_loader as loader
 
     mock_client = MagicMock()
-    mock_client.get_object.return_value = {"Body": _make_train_csv_bytes()}
+    mock_client.get_object.return_value = {"Body": _make_train_parquet_bytes()}
 
     monkeypatch.setattr(loader, "DATA_SOURCE", "remote")
     monkeypatch.setattr(loader, "_get_s3_client", lambda: mock_client)
@@ -288,7 +288,7 @@ def test_load_train_data_remote_returns_dataframe(monkeypatch):
 
     mock_client.get_object.assert_called_once_with(
         Bucket="train_flat_data",
-        Key="all_trains_data_flat_2024_01.csv",
+        Key="all_trains_data_flat_2024_01.parquet",
     )
     assert len(df) == 2
     assert pd.api.types.is_datetime64_any_dtype(df["scheduledTime"])
