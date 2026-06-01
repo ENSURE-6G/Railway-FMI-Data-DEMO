@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 st.title("🚆 Railway & Weather Data Explorer")
-st.caption("Finnish railway timetable and FMI meteorological observations — 2024–2025")
+st.caption(f"Finnish railway timetable and FMI meteorological observations — {min(AVAILABLE_YEARS)}–{max(AVAILABLE_YEARS)}")
 
 # --- Metrics ---
 train_stations = load_train_stations()
@@ -178,7 +178,7 @@ with st.expander("ℹ️ About this dataset"):
     st.markdown(f"""
 **Train data** is sourced from the [Finnish Transport Infrastructure Agency (Väylävirasto)](https://www.digitraffic.fi/)
 via the Digitraffic open data API. It covers all Finnish passenger, commuter, and freight trains
-with scheduled and actual timetable rows including delay information, for the years 2024–2025.
+with scheduled and actual timetable rows including delay information, for the years {min(AVAILABLE_YEARS)}–{max(AVAILABLE_YEARS)}.
 
 **Weather data** is sourced from the [Finnish Meteorological Institute (FMI)](https://www.ilmatieteenlaitos.fi/)
 open data service. It contains hourly observations from **{len(ems_stations)} automatic weather stations**
