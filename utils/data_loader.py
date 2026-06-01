@@ -74,6 +74,11 @@ def load_weather_data(year: int, month: int) -> pd.DataFrame:
             return pd.DataFrame()
 
 
+def _fix_matched_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    df["differenceInMinutes"] = pd.to_numeric(df["differenceInMinutes"], errors="coerce")
+    return df
+
+
 @st.cache_data(ttl=3600, max_entries=6)
 def load_matched_data(year: int, month: int) -> pd.DataFrame:
     filename = MATCHED_FILE_PATTERN.format(year=year, month=month)
@@ -81,12 +86,12 @@ def load_matched_data(year: int, month: int) -> pd.DataFrame:
         path = MATCHED_DATA_PATH / filename
         if not path.exists():
             return pd.DataFrame()
-        return pd.read_parquet(path)
+        return _fix_matched_dtypes(pd.read_parquet(path))
     else:
         try:
             client = _get_s3_client()
             obj = client.get_object(Bucket=ALLAS_MATCHED_BUCKET, Key=filename)
-            return pd.read_parquet(io.BytesIO(obj["Body"].read()))
+            return _fix_matched_dtypes(pd.read_parquet(io.BytesIO(obj["Body"].read())))
         except Exception as e:
             st.error(f"Could not load matched data from Allas: {e}")
             return pd.DataFrame()
