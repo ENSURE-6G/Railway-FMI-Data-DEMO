@@ -81,20 +81,12 @@ def load_matched_data(year: int, month: int) -> pd.DataFrame:
         path = MATCHED_DATA_PATH / filename
         if not path.exists():
             return pd.DataFrame()
-        return pd.read_csv(
-            path,
-            parse_dates=["scheduledTime", "actualTime", "departureDate", "timetableAcceptanceDate"],
-            low_memory=False,
-        )
+        return pd.read_parquet(path)
     else:
         try:
             client = _get_s3_client()
             obj = client.get_object(Bucket=ALLAS_MATCHED_BUCKET, Key=filename)
-            return pd.read_csv(
-                io.BytesIO(obj["Body"].read()),
-                parse_dates=["scheduledTime", "actualTime", "departureDate", "timetableAcceptanceDate"],
-                low_memory=False,
-            )
+            return pd.read_parquet(io.BytesIO(obj["Body"].read()))
         except Exception as e:
             st.error(f"Could not load matched data from Allas: {e}")
             return pd.DataFrame()
