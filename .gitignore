@@ -28,3 +28,6 @@ Thumbs.db
 
 # pytest
 .pytest_cache/
+
+# Superpowers plans and specs
+docs/superpowers/
