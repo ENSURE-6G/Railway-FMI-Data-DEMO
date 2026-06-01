@@ -33,5 +33,8 @@ TRAIN_TYPES: list[str] = ["IC", "S", "PYO", "HDM", "HL", "T"]
 MAP_CENTER: list[float] = [64.5, 26.0]
 MAP_ZOOM: int = 5
 
+DEFAULT_YEAR: int = 2024
+DEFAULT_MONTH: int = 1
+
 DEFAULT_ORIGIN = "Helsinki asema"
 DEFAULT_DESTINATION = "Rovaniemi"

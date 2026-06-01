@@ -6,15 +6,15 @@ import plotly.graph_objects as go
 from streamlit_folium import st_folium
 from utils.data_loader import load_weather_data, load_ems_stations
 from utils.weather_utils import get_station_timeseries
-from const import AVAILABLE_YEARS, AVAILABLE_MONTHS, MAP_CENTER, MAP_ZOOM
+from const import AVAILABLE_YEARS, AVAILABLE_MONTHS, DEFAULT_YEAR, DEFAULT_MONTH, MAP_CENTER, MAP_ZOOM
 
 st.set_page_config(page_title="Weather Viewer", page_icon="🌤️", layout="wide")
 st.title("🌤️ Weather Viewer")
 
 # --- Data selection ---
 col_y, col_m = st.columns(2)
-year = col_y.selectbox("Year", AVAILABLE_YEARS, index=0)
-month = col_m.selectbox("Month", AVAILABLE_MONTHS, index=0, format_func=lambda m: f"{m:02d}")
+year = col_y.selectbox("Year", AVAILABLE_YEARS, index=AVAILABLE_YEARS.index(DEFAULT_YEAR))
+month = col_m.selectbox("Month", AVAILABLE_MONTHS, index=AVAILABLE_MONTHS.index(DEFAULT_MONTH), format_func=lambda m: f"{m:02d}")
 
 with st.spinner("Loading weather data..."):
     weather_df = load_weather_data(year, month)

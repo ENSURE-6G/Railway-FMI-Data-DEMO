@@ -6,15 +6,15 @@ import plotly.graph_objects as go
 from streamlit_folium import st_folium
 from utils.data_loader import load_train_data, load_train_stations
 from utils.train_utils import get_unique_stations, get_trains_for_route, get_train_route
-from const import AVAILABLE_YEARS, AVAILABLE_MONTHS, DEFAULT_ORIGIN, DEFAULT_DESTINATION
+from const import AVAILABLE_YEARS, AVAILABLE_MONTHS, DEFAULT_YEAR, DEFAULT_MONTH, DEFAULT_ORIGIN, DEFAULT_DESTINATION
 
 st.set_page_config(page_title="Train Viewer", page_icon="🚆", layout="wide")
 st.title("🚆 Train Viewer")
 
 # --- Data selection ---
 col_y, col_m = st.columns(2)
-year = col_y.selectbox("Year", AVAILABLE_YEARS, index=0)
-month = col_m.selectbox("Month", AVAILABLE_MONTHS, index=0, format_func=lambda m: f"{m:02d}")
+year = col_y.selectbox("Year", AVAILABLE_YEARS, index=AVAILABLE_YEARS.index(DEFAULT_YEAR))
+month = col_m.selectbox("Month", AVAILABLE_MONTHS, index=AVAILABLE_MONTHS.index(DEFAULT_MONTH), format_func=lambda m: f"{m:02d}")
 
 with st.spinner("Loading train data..."):
     stops_df = load_train_data(year, month)
