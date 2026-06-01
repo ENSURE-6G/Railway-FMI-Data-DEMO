@@ -45,20 +45,12 @@ def load_train_data(year: int, month: int) -> pd.DataFrame:
         path = TRAIN_DATA_PATH / filename
         if not path.exists():
             return pd.DataFrame()
-        return pd.read_csv(
-            path,
-            parse_dates=["scheduledTime", "actualTime", "departureDate", "timetableAcceptanceDate"],
-            low_memory=False,
-        )
+        return pd.read_parquet(path)
     else:
         try:
             client = _get_s3_client()
             obj = client.get_object(Bucket=ALLAS_TRAIN_BUCKET, Key=filename)
-            return pd.read_csv(
-                io.BytesIO(obj["Body"].read()),
-                parse_dates=["scheduledTime", "actualTime", "departureDate", "timetableAcceptanceDate"],
-                low_memory=False,
-            )
+            return pd.read_parquet(io.BytesIO(obj["Body"].read()))
         except Exception as e:
             st.error(f"Could not load train data from Allas: {e}")
             return pd.DataFrame()
