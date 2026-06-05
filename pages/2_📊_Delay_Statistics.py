@@ -48,57 +48,6 @@ c4.metric(
 
 st.divider()
 
-# ── SECTION 1: HERO TIME SERIES ────────────────────────────────────────────────
-st.subheader("Daily Delay Rate, 2018–2025")
-st.caption("Raw daily rate (shaded area) with 7-day rolling average (line). Vertical lines mark year boundaries.")
-
-fig_ts = go.Figure()
-
-fig_ts.add_trace(go.Scatter(
-    x=df["date"], y=df["delay_rate"],
-    mode="lines",
-    line=dict(color="rgba(232,64,64,0.3)", width=1),
-    fill="tozeroy",
-    fillcolor="rgba(232,64,64,0.08)",
-    name="Daily rate",
-    hovertemplate="%{x|%Y-%m-%d}<br>Rate: %{y:.1%}<extra></extra>",
-))
-fig_ts.add_trace(go.Scatter(
-    x=df["date"], y=df["rolling_delay_rate_7d"],
-    mode="lines",
-    line=dict(color="#C0392B", width=2.5),
-    name="7-day rolling avg",
-    hovertemplate="%{x|%Y-%m-%d}<br>7d avg: %{y:.1%}<extra></extra>",
-))
-
-for year in range(2019, 2026):
-    jan1 = pd.Timestamp(f"{year}-01-01")
-    fig_ts.add_vline(x=jan1, line_dash="dot", line_color="rgba(0,0,0,0.25)", line_width=1)
-    fig_ts.add_annotation(
-        x=jan1, y=0.78, text=str(year), showarrow=False,
-        font=dict(size=10, color="rgba(0,0,0,0.45)"), xanchor="left",
-    )
-
-fig_ts.add_vrect(
-    x0="2020-03-15", x1="2021-06-01",
-    fillcolor="rgba(100,149,237,0.12)", line_width=0,
-    annotation_text="COVID-19<br>lockdowns",
-    annotation_position="top left",
-    annotation_font_size=11,
-    annotation_font_color="#3a5fa0",
-)
-fig_ts.update_layout(
-    height=420,
-    yaxis=dict(tickformat=".0%", title="Delay Rate"),
-    xaxis=dict(title=""),
-    legend=dict(orientation="h", y=-0.15),
-    margin=dict(l=10, r=10, t=20, b=10),
-    hovermode="x unified",
-)
-st.plotly_chart(fig_ts, width="stretch")
-
-st.divider()
-
 # ── SECTION 2: YEAR × MONTH HEATMAP + ANNUAL BAR ──────────────────────────────
 st.subheader("Year-over-Year Comparison")
 
@@ -271,72 +220,6 @@ fig_sev.update_layout(
     hovermode="x unified",
 )
 st.plotly_chart(fig_sev, width="stretch")
-
-st.divider()
-
-# ── SECTION 5: BOX PLOTS BY YEAR ──────────────────────────────────────────────
-st.subheader("Day-to-Day Delay Rate Distribution by Year")
-st.caption("Each box shows the spread of daily delay rates within that year. Green = below dataset average; red = above.")
-
-fig_box = go.Figure()
-for year in sorted(df["year"].unique()):
-    yr_data = df[df["year"] == year]["delay_rate"]
-    color = "#2ecc71" if yearly_avg[year] < overall_rate else "#e74c3c"
-    fig_box.add_trace(go.Box(
-        y=yr_data,
-        name=str(year),
-        marker_color=color,
-        line_color=color,
-        boxmean=True,
-        hovertemplate=f"{year}<br>Rate: %{{y:.1%}}<extra></extra>",
-    ))
-fig_box.update_layout(
-    height=380,
-    yaxis=dict(tickformat=".0%", title="Daily delay rate"),
-    xaxis=dict(title=""),
-    showlegend=False,
-    margin=dict(l=10, r=10, t=10, b=10),
-)
-st.plotly_chart(fig_box, width="stretch")
-
-st.divider()
-
-# ── SECTION 6: DELAY PROPAGATION ──────────────────────────────────────────────
-st.subheader("Delay Propagation Along Routes")
-st.caption(
-    "Monthly average delay propagation ratio. "
-    ">1 = delays grow along the route; <1 = crews recover time en route."
-)
-
-prop = df.groupby(["year", "month"])["delay_propagation_ratio"].mean().reset_index()
-prop["date"] = pd.to_datetime({"year": prop["year"], "month": prop["month"], "day": 1})
-prop = prop.sort_values("date")
-
-fig_prop = go.Figure()
-fig_prop.add_trace(go.Scatter(
-    x=prop["date"], y=prop["delay_propagation_ratio"],
-    mode="lines",
-    line=dict(color="#C0392B", width=2),
-    name="Propagation ratio",
-    hovertemplate="%{x|%Y-%m}<br>Ratio: %{y:.3f}<extra></extra>",
-))
-fig_prop.add_hline(
-    y=1.0, line_dash="dash", line_color="gray",
-    annotation_text="Break-even (1.0)", annotation_position="top right",
-)
-for year in range(2019, 2026):
-    fig_prop.add_vline(
-        x=pd.Timestamp(f"{year}-01-01"),
-        line_dash="dot", line_color="rgba(0,0,0,0.2)", line_width=1,
-    )
-fig_prop.update_layout(
-    height=320,
-    yaxis=dict(title="Propagation ratio"),
-    xaxis=dict(title=""),
-    showlegend=False,
-    margin=dict(l=10, r=10, t=10, b=10),
-)
-st.plotly_chart(fig_prop, width="stretch")
 
 st.divider()
 
