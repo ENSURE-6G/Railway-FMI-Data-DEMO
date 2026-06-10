@@ -1,9 +1,8 @@
-import io
 import os
+import re
 from pathlib import Path
 import boto3
 from dotenv import load_dotenv
-import pandas as pd
 import requests
 
 load_dotenv()
@@ -15,22 +14,27 @@ client = boto3.client(
     aws_secret_access_key=os.environ.get("ALLAS_SECRET_ACCESS_KEY"),
 )
 
+DATE_START = (2018, 1)
+DATE_END   = (2022, 12)
+
 UPLOADS = [
     {
         "local_dir": Path(r"D:\OneDrive - University of Oulu and Oamk\Railway-FMI-Data-CSV-Files-v2\matched_flat_data"),
         "bucket": "matched_flat_data",
     },
-    {
-        "local_dir": Path(r"D:\OneDrive - University of Oulu and Oamk\Railway-FMI-Data-CSV-Files-v2\weather_with_rolling_windows_data"),
-        "bucket": "weather_data",
-    },
 ]
+
+def in_range(filename):
+    m = re.search(r"(\d{4})_(\d{2})\.parquet$", filename)
+    if not m:
+        return False
+    return DATE_START <= (int(m.group(1)), int(m.group(2))) <= DATE_END
 
 for upload in UPLOADS:
     local_dir = upload["local_dir"]
     bucket = upload["bucket"]
-    files = sorted(local_dir.glob("*.parquet"))
-    print(f"\n=== Uploading {len(files)} files to bucket '{bucket}' ===")
+    files = [p for p in sorted(local_dir.glob("*.parquet")) if in_range(p.name)]
+    print(f"\n=== Uploading {len(files)} files to bucket '{bucket}' ({DATE_START[0]}-{DATE_START[1]:02d} -> {DATE_END[0]}-{DATE_END[1]:02d}) ===")
 
     for path in files:
         raw = path.read_bytes()

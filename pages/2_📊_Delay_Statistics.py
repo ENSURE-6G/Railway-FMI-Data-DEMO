@@ -1,6 +1,4 @@
 # pages/5_📊_Delay_Statistics.py
-import json
-
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -220,48 +218,3 @@ fig_sev.update_layout(
     hovermode="x unified",
 )
 st.plotly_chart(fig_sev, width="stretch")
-
-st.divider()
-
-# ── SECTION 7: DELAY BY TRAIN TYPE ────────────────────────────────────────────
-st.subheader("Delayed Stops by Train Type per Year")
-st.caption("Top 6 train types by total delayed stops across 2018–2025.")
-
-rows = []
-for _, row in df.iterrows():
-    try:
-        types = json.loads(row["delay_count_by_train_type"])
-        for train_type, count in types.items():
-            rows.append({"year": row["year"], "train_type": train_type, "count": int(count)})
-    except (json.JSONDecodeError, TypeError, ValueError):
-        pass
-
-type_df = pd.DataFrame(rows)
-type_agg = type_df.groupby(["year", "train_type"])["count"].sum().reset_index()
-top_types = type_agg.groupby("train_type")["count"].sum().nlargest(6).index.tolist()
-type_agg = type_agg[type_agg["train_type"].isin(top_types)]
-
-TYPE_COLORS = {
-    "IC": "#636EFA", "S": "#EF553B", "PVV": "#00CC96",
-    "PYO": "#AB63FA", "HDM": "#FFA15A", "AE": "#19D3F3",
-    "MV": "#FF6692", "HSM": "#B6E880",
-}
-fig_type = go.Figure()
-for tt in top_types:
-    sub = type_agg[type_agg["train_type"] == tt].sort_values("year")
-    fig_type.add_trace(go.Bar(
-        x=sub["year"].astype(str),
-        y=sub["count"],
-        name=tt,
-        marker_color=TYPE_COLORS.get(tt, "#888"),
-        hovertemplate=f"{tt}<br>Year: %{{x}}<br>Delayed stops: %{{y:,}}<extra></extra>",
-    ))
-fig_type.update_layout(
-    barmode="group",
-    height=380,
-    yaxis=dict(title="Delayed stops"),
-    xaxis=dict(title=""),
-    legend=dict(orientation="h", y=-0.2),
-    margin=dict(l=10, r=10, t=10, b=10),
-)
-st.plotly_chart(fig_type, width="stretch")

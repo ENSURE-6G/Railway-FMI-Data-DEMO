@@ -1,13 +1,19 @@
 # pages/6_🔍_Delay_Comparison.py
+from pathlib import Path
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
 from utils.data_loader import load_delay_stats, load_delay_offset
 
+ASSETS = Path(__file__).parent.parent / "assets"
+
 st.set_page_config(page_title="Delay Comparison", page_icon="🔍", layout="wide")
 st.title("🔍 Delay Origin vs. Propagation")
 st.caption("Comparing total delay (raw) with station-originated delay (offset-corrected) · 2018–2025")
+
+st.image(str(ASSETS / "delay_explained.png"), use_container_width=True)
 
 with st.expander("ℹ️ What do Raw and Origin delay mean?"):
     st.markdown("""

@@ -6,6 +6,12 @@ st.set_page_config(page_title="AI Results", page_icon="🤖", layout="wide")
 st.title("🤖 AI Results — XGBoost Delay Prediction")
 st.caption("Oulu central station · 101,146 observations · XGBoost · Chronological 80/20 split")
 
+st.info(
+    "📄 These results are published at **European Wireless 2026** — AI track · "
+    "Rimini, Italy.",
+    icon="📄",
+)
+
 ASSETS = Path(__file__).parent.parent / "assets"
 
 # ── EXPERIMENTAL SETUP ─────────────────────────────────────────────────────────

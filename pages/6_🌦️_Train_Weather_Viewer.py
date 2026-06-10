@@ -11,6 +11,12 @@ from const import AVAILABLE_YEARS, AVAILABLE_MONTHS, DEFAULT_YEAR, DEFAULT_MONTH
 st.set_page_config(page_title="Train & Weather Viewer", page_icon="🌦️", layout="wide")
 st.title("🌦️ Train & Weather Viewer")
 
+st.info(
+    "📄 This dataset was submitted to **IEEE Transactions on Intelligent Transportation "
+    "Systems** (December 2025) and is currently under review. "
+    "Preprint: https://arxiv.org/abs/2601.16592"
+)
+
 # --- Data selection ---
 col_y, col_m = st.columns(2)
 year = col_y.selectbox("Year", AVAILABLE_YEARS, index=AVAILABLE_YEARS.index(DEFAULT_YEAR))
