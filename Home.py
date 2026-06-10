@@ -7,13 +7,58 @@ from utils.data_loader import load_train_stations, load_ems_stations
 from const import MAP_CENTER, MAP_ZOOM, AVAILABLE_YEARS, METADATA_PATH
 
 st.set_page_config(
-    page_title="Railway & Weather Demo",
+    page_title="Prediction Train Delays in Finland",
     page_icon="🚆",
     layout="wide",
 )
 
-st.title("🚆 Railway & Weather Data Explorer")
-st.caption(f"Finnish railway timetable and FMI meteorological observations — {min(AVAILABLE_YEARS)}–{max(AVAILABLE_YEARS)}")
+st.title("🚆 Prediction Train Delays in Finland")
+
+st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-left: 5px solid #e94560;
+    border-radius: 8px;
+    padding: 20px 28px;
+    margin: 12px 0 20px 0;
+">
+    <p style="color:#e94560; font-size:13px; font-weight:700; letter-spacing:2px; margin:0 0 8px 0; text-transform:uppercase;">Project Goal</p>
+    <p style="color:#f0f0f0; font-size:20px; font-weight:600; margin:0 0 10px 0; line-height:1.4;">
+        Predict train delays through a <span style="color:#e94560;">multi-modal data fusion</span> system
+    </p>
+    <p style="color:#b0b8c8; font-size:14px; margin:0; line-height:1.6;">
+        This project fuses <strong style="color:#f0f0f0;">railway timetable data</strong> and
+        <strong style="color:#f0f0f0;">meteorological observations</strong> from FMI weather stations
+        to train predictive models for train delay forecasting — using <strong style="color:#f0f0f0;">Finland</strong> as the study case.
+        The dataset spans {min_year}–{max_year} and covers the full Finnish rail network.
+    </p>
+</div>
+""".format(min_year=min(AVAILABLE_YEARS), max_year=max(AVAILABLE_YEARS)), unsafe_allow_html=True)
+
+# --- Approach diagrams ---
+col_d1, col_arrow, col_d2 = st.columns([5, 1, 5])
+with col_d1:
+    st.markdown(
+        "<p style='text-align:center; font-weight:600; color:#888; font-size:13px; "
+        "letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;'>Traditional Approach</p>",
+        unsafe_allow_html=True,
+    )
+    st.image("assets/di1.png", use_container_width=True)
+with col_arrow:
+    st.markdown(
+        "<div style='display:flex; align-items:center; justify-content:center; height:100%; "
+        "font-size:36px; color:#e94560; padding-top:60px;'>→</div>",
+        unsafe_allow_html=True,
+    )
+with col_d2:
+    st.markdown(
+        "<p style='text-align:center; font-weight:600; color:#e94560; font-size:13px; "
+        "letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;'>Our Proposal — Multi-Modal Fusion</p>",
+        unsafe_allow_html=True,
+    )
+    st.image("assets/di2.png", use_container_width=True)
+
+st.divider()
 
 # --- Metrics ---
 train_stations = load_train_stations()
