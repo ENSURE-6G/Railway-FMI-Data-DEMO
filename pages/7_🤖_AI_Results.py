@@ -148,7 +148,7 @@ with f2:
 <div style="background:#e3f2fd;border-top:4px solid #1e88e5;border-radius:8px;
             padding:1.4rem 1.2rem;text-align:center;color:#111;height:100%;">
   <div style="font-size:2.2rem;">🌤️</div>
-  <div style="font-size:1.1rem;font-weight:700;margin:0.5rem 0;">Weather is the missing piece</div>
+  <div style="font-size:1.1rem;font-weight:700;margin:0.5rem 0;">Weather adds predictive value</div>
   <div style="font-size:0.9rem;color:#333;">Adding FMI weather data made predictions <strong>significantly better</strong> than train timetables alone.</div>
 </div>
 """, unsafe_allow_html=True)
@@ -158,7 +158,7 @@ with f3:
 <div style="background:#fff3e0;border-top:4px solid #fb8c00;border-radius:8px;
             padding:1.4rem 1.2rem;text-align:center;color:#111;height:100%;">
   <div style="font-size:2.2rem;">🔗</div>
-  <div style="font-size:1.1rem;font-weight:700;margin:0.5rem 0;">Fusion beats single source</div>
-  <div style="font-size:0.9rem;color:#333;">Combining <strong>train + weather</strong> data outperforms using either source on its own — the core idea is validated.</div>
+  <div style="font-size:1.1rem;font-weight:700;margin:0.5rem 0;">Room to improve with more data</div>
+  <div style="font-size:0.9rem;color:#333;">The model shows promise, but there is still space to improve — more training data could push accuracy further.</div>
 </div>
 """, unsafe_allow_html=True)

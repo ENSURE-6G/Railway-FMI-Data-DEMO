@@ -164,7 +164,7 @@ if st.session_state.get("search_done"):
                 tooltip=row["stationName"],
             ).add_to(m)
 
-        st_folium(m, width='stretch', height=650, returned_objects=[])
+        st_folium(m, width='stretch', height=900, returned_objects=[])
     else:
         st.warning("No coordinate data available for this train's stops.")
 

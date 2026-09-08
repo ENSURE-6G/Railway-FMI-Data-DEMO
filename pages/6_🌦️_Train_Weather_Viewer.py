@@ -233,7 +233,7 @@ if st.session_state.get("search_done"):
 
     _H = 260
     _M = dict(l=10, r=10, t=35, b=70)
-    _LEGEND = dict(orientation="h", y=-0.38, font=dict(size=10))
+    _LEGEND = dict(orientation="h", y=-0.38)
     _XTICK = dict(tickangle=-45, tickfont=dict(size=9))
 
     def _weather_fig(title, traces, y_label):
@@ -332,7 +332,7 @@ if st.session_state.get("search_done"):
             height=300,
             margin=dict(l=10, r=10, t=35, b=80),
             yaxis_title=unit,
-            legend=dict(orientation="h", y=-0.55, font=dict(size=9)),
+            legend=dict(orientation="h", y=-0.55),
             xaxis=dict(tickangle=-45, tickfont=dict(size=9)),
         )
         return f
